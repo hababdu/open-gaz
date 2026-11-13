@@ -1,0 +1,14 @@
+.DS_Store
+.idea/
+.gradle/
+build/
+**/build/
+local.properties
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
