@@ -8,8 +8,6 @@
 
 ## Local setup (macOS / Linux)
 
-From the repository root:
-
 ```bash
 cd backend
 cp .env.example .env
@@ -25,9 +23,7 @@ uvicorn app.main:app --reload
 OpenAPI docs: http://127.0.0.1:8000/docs
 
 ## Environment
-Before deploying, set unique strong values for JWT_SECRET_KEY and ADMIN_API_KEY.
-The values in .env.example are placeholders for local development only.
-Never commit .env.
+Set unique strong values for JWT_SECRET_KEY and ADMIN_API_KEY before deploying. The .env.example values are placeholders. Never commit .env.
 
 ## API overview
 - POST /api/v1/auth/register — create an account
@@ -42,13 +38,11 @@ Never commit .env.
 - GET /api/v1/stations/{id}/status — per-fuel consensus
 - GET /api/v1/stations/{id}/queue/{fuel_type_id} — queue estimate
 
-## Important trust boundary
-The backend ties reports to authenticated user accounts and checks submitted coordinates against station coordinates.
-A client-provided GPS coordinate is not cryptographic proof of physical presence. Production anti-abuse work should add device integrity signals, anomaly detection, moderation, and rate limiting.
-Community reports must not be described as official station confirmation.
+## Trust boundary
+Reports are associated with authenticated accounts and submitted coordinates are checked against station coordinates. Client-provided GPS is not cryptographic proof of physical presence. Add device integrity signals, anomaly detection, moderation, and rate limiting before production. Community reports are not official station confirmations.
 
 ## Migration policy
-Do not create tables at application startup. Apply schema changes with Alembic before starting the API:
+Apply schema changes with Alembic before starting the API:
 
 ```bash
 alembic upgrade head
