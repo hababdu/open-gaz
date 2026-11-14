@@ -6,6 +6,9 @@ class Settings(BaseSettings):
     app_env: str = "development"
     database_url: str = "postgresql+psycopg://open_gaz:local-dev-password@localhost:5432/open_gaz"
     admin_api_key: str = ""
+    jwt_secret_key: str = "development-only-change-this-secret-before-deploying"
+    jwt_algorithm: str = "HS256"
+    access_token_minutes: int = 60 * 24 * 7
     report_max_age_minutes: int = 90
     report_min_confidence: float = 0.55
     report_radius_meters: int = 1500
