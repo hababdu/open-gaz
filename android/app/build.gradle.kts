@@ -6,7 +6,8 @@ plugins {
 
 // Backend manzili. Emulyatorda kompyuter localhost'i 10.0.2.2 bo'ladi.
 // O'zgartirish: ./gradlew assembleDebug -PAPI_BASE_URL=https://sizning-server.uz/
-val apiBaseUrl: String = (project.findProperty("API_BASE_URL") as String?) ?: "http://10.0.2.2:8000/"
+val apiBaseUrl: String = (project.findProperty("API_BASE_URL") as String?)?.takeIf { it.isNotBlank() }
+    ?: "http://10.0.2.2:8000/"
 
 android {
     namespace = "uz.oppengaz"

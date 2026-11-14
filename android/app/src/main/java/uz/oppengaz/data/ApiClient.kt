@@ -17,8 +17,9 @@ class ApiClient(context: Context, baseUrl: String) {
     private val base = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
     private val json = "application/json; charset=utf-8".toMediaType()
     private val http = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        // Bepul serverlar uxlab qoladi: birinchi so'rov ~1 daqiqagacha cho'zilishi mumkin.
+        .readTimeout(75, TimeUnit.SECONDS)
         .build()
     private val prefs = context.getSharedPreferences("oppengaz_session", Context.MODE_PRIVATE)
 

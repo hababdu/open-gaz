@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -22,6 +23,22 @@ class Settings(BaseSettings):
     max_comments_per_10_min: int = 5
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @field_validator("database_url")
+    @classmethod
+    def _use_psycopg_driver(cls, value: str) -> str:
+        """Neon/Render `postgres://` yoki `postgresql://` beradi; biz psycopg 3 drayveridan foydalanamiz."""
+        for prefix in ("postgres://", "postgresql://"):
+            if value.startswith(prefix):
+                return "postgresql+psycopg://" + value[len(prefix):]
+        return value
+
+    @model_validator(mode="after")
+    def _require_real_secrets_in_production(self):
+        if self.app_env == "production":
+            if self.jwt_secret_key.startswith("development-only") or len(self.jwt_secret_key) < 32:
+                raise ValueError("JWT_SECRET_KEY must be a random string of at least 32 characters in production")
+        return self
 
     @property
     def allowed_origins(self) -> list[str]:
