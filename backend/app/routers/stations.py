@@ -1,11 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+import secrets
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from app.config import settings
 from app.db import get_db
 from app.models import Station
-from app.schemas import StationOut
+from app.schemas import StationCreate, StationOut
 
 router = APIRouter(prefix="/stations", tags=["stations"])
+
+def require_admin(x_admin_key: str | None = Header(default=None)):
+    if not settings.admin_api_key or not x_admin_key or not secrets.compare_digest(x_admin_key, settings.admin_api_key):
+        raise HTTPException(403, "Valid admin API key required")
+
+@router.post("", response_model=StationOut, status_code=201, dependencies=[Depends(require_admin)])
+def create_station(payload: StationCreate, db: Session = Depends(get_db)):
+    station = Station(**payload.model_dump())
+    db.add(station)
+    db.commit()
+    db.refresh(station)
+    return station
 
 @router.get("", response_model=list[StationOut])
 def list_stations(region: str | None = Query(default=None), db: Session = Depends(get_db)):
