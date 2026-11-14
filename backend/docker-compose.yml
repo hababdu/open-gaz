@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: open-gaz-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: open_gaz
+      POSTGRES_USER: open_gaz
+      POSTGRES_PASSWORD: local-dev-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - open_gaz_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U open_gaz -d open_gaz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  open_gaz_pgdata:
