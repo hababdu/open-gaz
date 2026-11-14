@@ -7,9 +7,11 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
 from app.dependencies import get_current_user
-from app.models import Station, StationComment, StationVote, User, utcnow
+from app.models import QueueReport, Station, StationComment, StationVote, StatusReport, User, utcnow
 from app.schemas import (CommunityStationCreate, NearbyStationOut, StationCreate, StationOut,
-                         StationVoteCreate, StationVoteOut)
+                         StationOverviewOut, StationVoteCreate, StationVoteOut)
+from app.services.overview import fuel_summaries
+from app.services.queue import QUEUE_MAX_AGE_MINUTES
 from app.services.geo import distance_meters
 from app.services.verification import is_verified, should_hide
 
@@ -130,6 +132,33 @@ def list_stations(region: str | None = Query(default=None), db: Session = Depend
     stations = list(db.scalars(query.order_by(Station.name)).all())
     counts = vote_counts(db, [s.id for s in stations])
     return [station_out(s, counts[s.id]) for s in stations]
+
+
+@router.get("/overview", response_model=list[StationOverviewOut])
+def stations_overview(region: str | None = Query(default=None), db: Session = Depends(get_db)):
+    """Xarita va ro'yxat uchun: shahobchalar + har yoqilg'i turi holati va navbati, bitta so'rovda."""
+    query = select(Station).where(Station.is_active.is_(True))
+    if region:
+        if region not in REGIONS:
+            raise HTTPException(422, "Unsupported region")
+        query = query.where(Station.region == region)
+    stations = list(db.scalars(query.order_by(Station.name)).all())
+    ids = [s.id for s in stations]
+    counts = vote_counts(db, ids)
+    status_by_station: dict[str, list] = {i: [] for i in ids}
+    queue_by_station: dict[str, list] = {i: [] for i in ids}
+    if ids:
+        now = utcnow()
+        for r in db.scalars(select(StatusReport).where(
+                StatusReport.station_id.in_(ids),
+                StatusReport.created_at >= now - timedelta(minutes=settings.report_max_age_minutes))):
+            status_by_station[r.station_id].append(r)
+        for r in db.scalars(select(QueueReport).where(
+                QueueReport.station_id.in_(ids),
+                QueueReport.created_at >= now - timedelta(minutes=QUEUE_MAX_AGE_MINUTES))):
+            queue_by_station[r.station_id].append(r)
+    return [{**station_out(s, counts[s.id]),
+             "fuels": fuel_summaries(s, status_by_station[s.id], queue_by_station[s.id])} for s in stations]
 
 
 @router.get("/{station_id}", response_model=StationOut)

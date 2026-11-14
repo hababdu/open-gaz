@@ -112,3 +112,16 @@ class QueueEstimateOut(BaseModel):
 
 class NearbyStationOut(StationOut):
     distance_meters: float
+
+
+class FuelSummaryOut(BaseModel):
+    fuel_type_id: str
+    status: Literal["open", "closed", "unknown"]
+    confidence: float
+    report_count: int
+    last_updated: datetime | None
+    queue_cars: float | None
+    queue_report_count: int
+
+class StationOverviewOut(StationOut):
+    fuels: list[FuelSummaryOut] = []

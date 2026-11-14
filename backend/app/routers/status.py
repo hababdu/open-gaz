@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from statistics import median
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -7,7 +6,7 @@ from app.db import get_db
 from app.models import FuelType, QueueReport, Station, StatusReport
 from app.schemas import FuelStatusOut, QueueEstimateOut
 from app.services.consensus import calculate_status
-from app.services.geo import distance_meters
+from app.services.queue import QUEUE_MAX_AGE_MINUTES, estimate_queue
 
 router = APIRouter(prefix="/stations", tags=["station status"])
 
@@ -32,20 +31,12 @@ def queue_estimate(station_id: str, fuel_type_id: str, db: Session = Depends(get
         raise HTTPException(404, "Station not found")
     if not db.get(FuelType, fuel_type_id):
         raise HTTPException(404, "Fuel type not found")
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=45)
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=QUEUE_MAX_AGE_MINUTES)
     reports = list(db.scalars(select(QueueReport).where(
         QueueReport.station_id == station_id,
         QueueReport.fuel_type_id == fuel_type_id,
         QueueReport.created_at >= cutoff,
     )).all())
-    latest_by_user = {}
-    for report in reports:
-        if distance_meters(station.latitude, station.longitude, report.latitude, report.longitude) <= 1500:
-            current = latest_by_user.get(report.reporter_id)
-            if current is None or report.created_at > current.created_at:
-                latest_by_user[report.reporter_id] = report
-    valid = list(latest_by_user.values())
-    estimate = round(float(median([r.cars_count for r in valid])), 1) if valid else None
-    newest = max((r.created_at for r in valid), default=None)
-    return {"fuel_type_id": fuel_type_id, "estimated_cars": estimate,
-            "report_count": len(valid), "last_updated": newest}
+    estimate = estimate_queue(reports, station.latitude, station.longitude)
+    return {"fuel_type_id": fuel_type_id, "estimated_cars": estimate["estimated_cars"],
+            "report_count": estimate["report_count"], "last_updated": estimate["last_updated"]}

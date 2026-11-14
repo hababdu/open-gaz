@@ -4,7 +4,7 @@ Community-powered live map of operating automotive gas stations across Uzbekista
 
 ## Initial scope
 - Android app: Kotlin + Jetpack Compose
-- Map: Google Maps SDK
+- Map: OpenStreetMap (osmdroid), no API key required
 - Backend: FastAPI
 - Database: PostgreSQL + PostGIS
 - Fuel types: CNG (metan), LPG (propan), and other automotive fuels
@@ -23,7 +23,9 @@ Community-powered live map of operating automotive gas stations across Uzbekista
 - `docs/` — product and technical specifications
 
 ## Development status
-Foundation scaffold. Google Maps API keys, database credentials, and Firebase configuration must be supplied locally; never commit secrets.
+Backend: stations, status/queue reports, driver-added stations with community confirmations, comments.
+Android: first full client (list/map, station details, reports, confirmations, comments); not yet built in Android Studio.
+Database credentials and secrets must be supplied locally; never commit secrets.
 
 ## Local backend
 ```bash
