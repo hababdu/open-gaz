@@ -4,7 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "Open Gaz API"
     app_env: str = "development"
-    database_url: str = "postgresql+psycopg://open_gaz:change-me@localhost:5432/open_gaz"
+    database_url: str = "postgresql+psycopg://open_gaz:local-dev-password@localhost:5432/open_gaz"
+    admin_api_key: str = ""
     report_max_age_minutes: int = 90
     report_min_confidence: float = 0.55
     report_radius_meters: int = 1500
