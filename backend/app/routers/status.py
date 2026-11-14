@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.db import get_db
-from app.models import QueueReport, Station, StatusReport
+from app.models import FuelType, QueueReport, Station, StatusReport
 from app.schemas import FuelStatusOut, QueueEstimateOut
 from app.services.consensus import calculate_status
 from app.services.geo import distance_meters
@@ -17,11 +17,12 @@ def station_status(station_id: str, db: Session = Depends(get_db)):
     if not station or not station.is_active:
         raise HTTPException(404, "Station not found")
     reports = list(db.scalars(select(StatusReport).where(StatusReport.station_id == station_id)).all())
-    fuel_ids = sorted({r.fuel_type_id for r in reports})
+    fuels = db.scalars(select(FuelType).where(FuelType.is_active.is_(True)).order_by(FuelType.id)).all()
     result = []
-    for fuel_id in fuel_ids:
-        result.append({"fuel_type_id": fuel_id, **calculate_status(
-            [r for r in reports if r.fuel_type_id == fuel_id], station.latitude, station.longitude)})
+    for fuel in fuels:
+        fuel_reports = [r for r in reports if r.fuel_type_id == fuel.id]
+        result.append({"fuel_type_id": fuel.id, **calculate_status(
+            fuel_reports, station.latitude, station.longitude)})
     return result
 
 @router.get("/{station_id}/queue/{fuel_type_id}", response_model=QueueEstimateOut)
@@ -29,6 +30,8 @@ def queue_estimate(station_id: str, fuel_type_id: str, db: Session = Depends(get
     station = db.get(Station, station_id)
     if not station or not station.is_active:
         raise HTTPException(404, "Station not found")
+    if not db.get(FuelType, fuel_type_id):
+        raise HTTPException(404, "Fuel type not found")
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=45)
     reports = list(db.scalars(select(QueueReport).where(
         QueueReport.station_id == station_id,
