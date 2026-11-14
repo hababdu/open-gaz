@@ -29,8 +29,8 @@ jobs:
       - name: Unit tests
         run: gradle :app:testDebugUnitTest --stacktrace
       - name: Build debug APK
-        # Repo Settings > Variables > API_BASE_URL (masalan https://open-gaz-api.onrender.com/)
-        run: gradle :app:assembleDebug --stacktrace "-PAPI_BASE_URL=${{ vars.API_BASE_URL }}"
+        # Boshqa server uchun: repo Settings > Variables > API_BASE_URL
+        run: gradle :app:assembleDebug --stacktrace "-PAPI_BASE_URL=${{ vars.API_BASE_URL || 'https://open-gaz-api.onrender.com/' }}"
       - uses: actions/upload-artifact@v4
         with:
           name: open-gaz-debug-apk
