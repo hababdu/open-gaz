@@ -12,6 +12,14 @@ class Settings(BaseSettings):
     report_max_age_minutes: int = 90
     report_min_confidence: float = 0.55
     report_radius_meters: int = 1500
+    # Haydovchi qo'shgan shahobcha shuncha turli haydovchi tasdiqlagach "tasdiqlangan" bo'ladi.
+    station_verify_threshold: int = 3
+    # Shuncha haydovchi "yo'q" desa (va "bor"dan ko'p bo'lsa) community shahobcha yashiriladi.
+    station_hide_threshold: int = 3
+    # Shahobcha qo'shish va tasdiqlash uchun haydovchi shahobchadan shuncha metr ichida bo'lishi kerak.
+    station_vote_radius_meters: int = 500
+    max_new_stations_per_day: int = 5
+    max_comments_per_10_min: int = 5
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

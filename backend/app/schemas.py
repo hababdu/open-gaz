@@ -42,6 +42,42 @@ class StationOut(BaseModel):
     latitude: float
     longitude: float
     is_active: bool
+    source: Literal["admin", "community"] = "admin"
+    # Necha haydovchi "bu yerda shahobcha bor" / "yo'q" degan.
+    confirmations_count: int = 0
+    missing_count: int = 0
+    # Tasdiqlangan deb hisoblash uchun nechta tasdiq kerak (UI da "2/3" ko'rsatish uchun).
+    confirmations_needed: int = 0
+    is_verified: bool = True
+    comments_count: int = 0
+
+class CommunityStationCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=180)
+    address: str = Field(default="", max_length=300)
+    region: Literal["fergana", "andijan", "namangan"]
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    # Haydovchining hozirgi joyi: faqat shahobcha yonida turgan odam qo'sha oladi.
+    reporter_latitude: float = Field(ge=-90, le=90)
+    reporter_longitude: float = Field(ge=-180, le=180)
+
+class StationVoteCreate(BaseModel):
+    vote: Literal["exists", "missing"]
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+
+class StationVoteOut(BaseModel):
+    my_vote: Literal["exists", "missing"]
+    station: StationOut
+
+class CommentCreate(BaseModel):
+    text: str = Field(min_length=1, max_length=500)
+
+class CommentOut(BaseModel):
+    id: str
+    author_name: str
+    text: str
+    created_at: datetime
 
 class StatusReportCreate(BaseModel):
     fuel_type_id: FuelCode
