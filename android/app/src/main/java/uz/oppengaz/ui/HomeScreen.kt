@@ -57,7 +57,9 @@ fun HomeScreen(
     onOpen: (String) -> Unit,
     onAdd: () -> Unit,
     onLogin: () -> Unit,
+    onRequestLocation: () -> Unit,
 ) {
+    val granted by vm.permissionGranted.collectAsState()
     val stations by vm.stations.collectAsState()
     val filters by vm.filters.collectAsState()
     val loading by vm.loading.collectAsState()
@@ -106,6 +108,20 @@ fun HomeScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            if (!granted) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            "Yaqin shahobchalarni ko'rsatish va holat yuborish uchun joylashuvga ruxsat kerak.",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        TextButton(onClick = onRequestLocation) { Text("Ruxsat berish") }
+                    }
+                }
+            }
             Row(
                 Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),

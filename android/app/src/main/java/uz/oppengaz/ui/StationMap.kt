@@ -3,6 +3,11 @@ package uz.oppengaz.ui
 import android.graphics.Color as AColor
 import android.graphics.drawable.GradientDrawable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -37,10 +42,16 @@ fun StationMap(
     onClick: (Station) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var mapView by remember { mutableStateOf<MapView?>(null) }
+    LifecycleResumeEffect(mapView) {
+        mapView?.onResume()
+        onPauseOrDispose { mapView?.onPause() }
+    }
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
             MapView(ctx).apply {
+                mapView = this
                 setTileSource(TileSourceFactory.MAPNIK)
                 setMultiTouchControls(true)
                 if (me != null) {
@@ -65,6 +76,6 @@ fun StationMap(
             }
             map.invalidate()
         },
-        onRelease = { it.onDetach() },
+        onRelease = { it.onDetach(); mapView = null },
     )
 }

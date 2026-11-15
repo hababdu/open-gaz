@@ -53,6 +53,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val _location = MutableStateFlow<LatLon?>(null)
     val location: StateFlow<LatLon?> = _location.asStateFlow()
 
+    private val _permission = MutableStateFlow(locationProvider.hasPermission())
+    val permissionGranted: StateFlow<Boolean> = _permission.asStateFlow()
+
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
@@ -110,6 +113,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setRegion(r: Region?) = _filters.update { it.copy(region = r) }
     fun setFuel(f: Fuel?) = _filters.update { it.copy(fuel = f) }
     fun setOnlyOpen(v: Boolean) = _filters.update { it.copy(onlyOpen = v) }
+
+    fun checkPermission() { _permission.value = locationProvider.hasPermission() }
+
+    /** Joylashuvni qo'lda aniqlash (xarita tugmasi). */
+    fun locate() {
+        viewModelScope.launch {
+            checkPermission()
+            if (refreshLocation() == null) say("Joylashuvni aniqlab bo'lmadi. GPS va ruxsatni tekshiring")
+        }
+    }
 
     suspend fun refreshLocation(): LatLon? {
         val loc = locationProvider.current()
