@@ -1,6 +1,10 @@
 package uz.oppengaz.ui
 
+import android.accounts.AccountManager
+import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,12 +20,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +47,26 @@ fun AuthScreen(vm: AppViewModel, onDone: () -> Unit, onBack: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
+
+    // Telefondagi Google (Gmail) hisoblardan birini tanlatadi. Qo'shimcha ruxsat kerak emas.
+    val accountPicker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val account = result.data?.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
+        if (result.resultCode == Activity.RESULT_OK && !account.isNullOrBlank()) {
+            email = account
+            if (name.isBlank()) name = account.substringBefore("@").replaceFirstChar { it.uppercase() }
+            error = null
+        }
+    }
+    fun pickGoogleAccount() {
+        val intent = AccountManager.newChooseAccountIntent(
+            null, null, arrayOf("com.google"), null, null, null, null,
+        )
+        runCatching { accountPicker.launch(intent) }
+    }
+    // Ro'yxatdan o'tish ochilishi bilan Gmail tanlash oynasini o'zi ochamiz.
+    LaunchedEffect(register) {
+        if (register && email.isBlank()) pickGoogleAccount()
+    }
 
     Scaffold(
         topBar = {
@@ -66,6 +92,9 @@ fun AuthScreen(vm: AppViewModel, onDone: () -> Unit, onBack: () -> Unit) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
             )
+            OutlinedButton(onClick = { pickGoogleAccount() }, modifier = Modifier.fillMaxWidth()) {
+                Text("Telefondagi Gmail'ni tanlash")
+            }
             if (register) {
                 OutlinedTextField(
                     value = name, onValueChange = { name = it },
